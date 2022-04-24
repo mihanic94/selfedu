@@ -1,0 +1,9 @@
+{% extends 'women/base.html' %}
+
+{% block content %}
+<form action="{% url 'add_page' %}" method="post">
+    {% csrf_token %} {# Защита от csrf - атак #}
+    {{ form.as_p }}
+    <button type="submit">Добавить</button>
+</form>
+{% endblock %}
