@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.views.generic import ListView, DetailView
 
-from women.forms import AddPostForm
+from .forms import *
 from women.models import Women
 
 menu = [{'title': 'О сайте', 'url_name': 'about'},
@@ -15,7 +15,7 @@ menu = [{'title': 'О сайте', 'url_name': 'about'},
 
 class WomenHome(ListView):
     model = Women  # Выбираются все записи из таблицы Women и отображаются в виде списка(имя 'object_list' в шаблоне)
-    template_name = 'women/index.html'  # Если не указать этот атрибут, тогда ищется шаблон по адресу: <имя_приложения>/<имя_модели_list.html>
+    template_name = 'women/index.html'  # Если не указать этот атрибут, тогда ищется шаблон по адресу: <templates>/<имя_приложения>/<имя_модели_list.html>
     context_object_name = 'posts'  # Если не использовать этот атрибут, то в шаблоне коллекция будет доступна по имени object_list!
     extra_context = {'title': 'главная страница'}  # Можно передавать только неизменяемые объекты(числа, строки и т.д.)
 
@@ -45,14 +45,25 @@ class WomenHome(ListView):
 #     return render(request, 'women/index.html', context=context)
 
 
-def about(request: WSGIRequest):  # Таким образом мы увидим все методы объекта request
-    return render(request, 'women/about.html', {'title': 'Заголовок', 'menu': menu})
-
-
 def addpage(request):
-    form = AddPostForm()
+    if request.method == 'POST':
+        print(request.method)
+        form = AddPostForm(request.POST)
+        if form.is_valid():
+            print(form.cleaned_data)
+            try:
+                Women.objects.create(**form.cleaned_data)
+                return redirect('home')
+            except Exception:
+                form.add_error(None, 'Ошибка добавления поста')
 
+    else:
+        form = AddPostForm()
     return render(request, 'women/addpage.html', context={'form': form, 'menu': menu, 'title': 'Добавление статьи'})
+
+
+def about(request: WSGIRequest):  # Таким образом мы увидим все методы объекта request.
+    return render(request, 'women/about.html', {'title': 'Заголовок', 'menu': menu})
 
 
 def contact(request):
@@ -78,7 +89,7 @@ def login(request):
 class ShowPost(DetailView):
     model = Women
     template_name = 'women/post.html'
-    slug_url_kwarg = 'post_slug'
+    slug_url_kwarg = 'post_slug'      # Если используем слаг
     # pk_url_kwarg = <имя параметра>  # Если используем число
     context_object_name = 'post'
 
